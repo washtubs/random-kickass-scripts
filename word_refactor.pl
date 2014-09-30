@@ -1,6 +1,8 @@
 #!/usr/bin/env perl
 use Getopt::Long;
 my @maps;
+
+# negated character class that consists of the set of characters forming an "identifier" like a variable name
 my $negative_word_regex="[^0-9A-Za-z_]";
 GetOptions (
     #examples
@@ -13,12 +15,6 @@ foreach (@maps) {
     #print $_;
     @map = split(/=/,$_);
     $substitutions{ $map[0] }=$map[1];
-}
-
-for (keys %substitutions)
-{
-    #print $_." ".$substitutions{$_}."|\n";
-
 }
 
 while (<>) {
