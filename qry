@@ -1,0 +1,41 @@
+#!/usr/bin/env zsh
+
+# dual find-grep wrapper for git files!
+# run it inside a git repository and it will search down from where you are
+
+local find_params
+local grep_params
+find_params=()
+grep_params=()
+while [[ ! -z $1 && $1 != "--" ]]; do
+    find_params+=$1
+    shift
+done
+if [[ ! -z $1 && $1 = "--" ]]; then
+    shift
+fi
+while [[ ! -z $1 && $1 != "--" ]]; do
+    grep_params+=$1
+    shift
+done
+
+local git_params_default
+local xargs_params_default
+local find_params_default
+local grep_params_default
+git_params_default=(ls-files .)
+xargs_params_default=(-P10 -n20 -I '[]')
+find_params_default=('[]')
+# I use pcre grep cause I'm an opinionated jackass
+grep_params_default=(--color=always -H -n -P)
+
+if [ -z "$grep_params" ]; then
+    git ${git_params_default} | \
+        xargs ${xargs_params_default} find ${find_params_default} ${find_params} \
+        2>/dev/null
+else
+    git ${git_params_default} | \
+        xargs ${xargs_params_default} find ${find_params_default} ${find_params} \
+        -exec grep ${grep_params_default} ${grep_params} '{}' \; \
+        2>/dev/null
+fi
