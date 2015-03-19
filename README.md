@@ -10,7 +10,8 @@ stuff.
 | Script                          | Description                                                                           |
 | ---                             | ---                                                                                   |
 | [Word Refactor](#word-refactor) | Simple refactoring script that replaces word strings, while cognizant of word endings |
-| [qry](#qry)                     | git-ls-files / find / grep wrapper (surprisingly useful)                              |
+| [Qry](#qry)                     | git-ls-files / find / grep wrapper (surprisingly useful)                              |
+| [EOF](#eof)                     | fixes newline eof to match an original version, or set manually                       |
 
 Word Refactor
 -------------
@@ -31,3 +32,14 @@ Qry
 - [ ] actually make it a git wrapper
 - [ ] optional use of any three
 - [ ] fix stupid xargs bug
+
+EOF
+---
+All operations occur on the file in place
+
+```bash
+» eof append $file 
+» eof chomp $file
+» eof gir-revert @{upstream} $file
+```
+
