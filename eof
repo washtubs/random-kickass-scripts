@@ -2,15 +2,15 @@
 
 function _append() {
     local file=$1
-    # TODO
+    sed -i -e '$a\' $file
 }
 
 function _chomp() {
     local file=$1
-    # TODO
+    perl -i -pe "chomp if eof" $file
 }
 
-function _revert() {
+function _git-revert() {
     local git_rev=$1
     local file=$2
     # we can tell exactly what we need by checking the diff to see
@@ -18,13 +18,15 @@ function _revert() {
     # 1: new file ends with a no newline: append needed
     # 2: old file ends with a no newline: chomp needed
     # 0: no eof difference: do nothing
-    local status=$(git diff $rev $file | cat - | \
+    local s=$(git diff $git_rev $file | cat - | \
         grep -i -A1 'no newline' | wc -l || return 1)
-    case $status in
+    case $s in
         1)
+            echo "Appending newline on $file ..."
             _append $file
             ;;
         2)
+            echo "Chomping newline on $file ..."
             _chomp $file
             ;;
         0)
