@@ -1,0 +1,54 @@
+#!/usr/bin/env zsh
+
+# tag m4 looks for a specified set of single word tags throughout
+# your source code and either removes or preserves them.
+
+# Different ways a tag can be set:
+# Open and closer TAG/ /TAG: useful if you want to exclude a block of code.
+# Opener [TAG] : useful for multiline comments
+    # (p.s. you can separate this from real comments by ending
+    # it with an uncommented newline)
+# Oneline TAG: : for oneline comments
+
+# expects a file or named pipe input
+
+# note when doing a multiline [tag] it is expected to use single line comment syntax, aka:
+# // [TAG]
+# // stuff stuff stuff
+# NOT
+# /* [TAG]
+#  * stuff stuff stuff
+#  */
+
+local input="$1"
+local tag="$2"
+local inject="$3"
+local tmp=$(mktemp /tmp/XXXX)
+local tmp2=$(mktemp /tmp/XXXX)
+
+if [ -z $inject ]; then
+    inject_params=(-vshould_inject=0)
+else
+    inject_params=(-vshould_inject=1 -vinject=$inject)
+fi
+
+# PASS 1: oneline
+cat $input | \
+    awk -vblock=0 \
+    '$0~/\['${tag}'\]/{block=1; match($0, /^\s*([^a-zA-Z0-9 ]*) /, ary); comment=ary[1]}
+    !(block && match($0, /^\s*([^a-zA-Z0-9 ]*) /, ary) && ary[1] == comment) && $0!="" {block=0}
+    !block{print} 
+    $0==""{block=0}' > $tmp
+# PASS 2: multiline [tag]
+cat $tmp | \
+    awk -vblock=0 \
+    '$0!~/'${tag}':/{ print $0 }' > $tmp2
+# PASS 3: multiline open/close
+cat $tmp2 | \
+    awk ${inject_params} -vblock=0 \
+    '$0~/'${tag}'\// { block = 1; if (should_inject) {system("cat " inject);} }
+    !block{print}
+    $0~/\/'${tag}'/ { block = 0 }'
+
+# empty string unblock but don't print
+rm $tmp $tmp2

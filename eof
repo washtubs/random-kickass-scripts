@@ -33,6 +33,7 @@ function _revert() {
     esac
 
 }
+#use diff --git ???
 
 # unfinished
 function _revert() {
