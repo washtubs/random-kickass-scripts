@@ -17,13 +17,19 @@ function _git-revert() {
     # if it... 
     # 1: new file ends with a no newline: append needed
     # 2: old file ends with a no newline: chomp needed
-    # 0: no eof difference: do nothing
+    # 0: no eof difference, or an error occured: do nothing
     local s=$(git diff $git_rev $file | cat - | \
-        grep -i -A1 'no newline' | wc -l || return 1)
+        grep -i -A1 'no newline' | wc -l || echo "0")
     case $s in
         1)
-            echo "Appending newline on $file ..."
-            _append $file
+            # same as above but get the line before it and check if it actually starts with a plus.
+            # if it doesnt have a plus, the no newline is part of the original file and we don't need to
+            # do anything
+            if (git diff $git_rev $file | cat - | \
+                grep -i -B1 'no newline' | grep -q '^+'); then
+                echo "Appending newline on $file ..."
+                _append $file
+            fi
             ;;
         2)
             echo "Chomping newline on $file ..."
