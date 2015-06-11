@@ -1,0 +1,8 @@
+#!/usr/bin/env zsh
+# WARNING! edits files in place. we assume you are using version control
+script=$1
+f=$2
+temp=$(mktemp java_import_organizeXXXX)
+line_organize <(awk 'BEGIN{p=1;} $0~/class.*{/{p=0} p{print}' $f) $script >> $temp
+awk 'BEGIN{p=0;} $0~/class.*{/{p=1} p{print}' $f >> $temp
+mv $temp $f 

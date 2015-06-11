@@ -1,0 +1,50 @@
+#!/usr/bin/env zsh
+
+#awk 'BEGIN{p=1;} $0~/class.*{/{p=0} p{print}'
+function handle-directive() {
+    head=$1
+    shift
+    case $head in
+        sort)
+            sort_args=$@
+            should_sort=true
+            ;;
+        grep)
+            grep_args=$@
+            ;;
+        stable)
+            should_sort=false
+            ;;
+    esac
+}
+
+function print-batch() {
+    local pattern="$1"
+    if $should_sort; then
+        #echo " >>> cat $file | grep $grep_args $pattern | sort $sort_args" >&2
+        cat $file | grep $grep_args $pattern | sort $sort_args 
+    else
+        #echo " >>> cat $file | grep $grep_args $pattern" >&2
+        cat $file | grep $grep_args $pattern
+    fi
+}
+
+script=$2
+file=$(mktemp "line_organizeXXXX")
+cat $1 > $file
+sort_args=()
+grep_args=()
+should_sort=true
+
+while read line; do
+    if { echo $line | grep --silent '^\[\[.*\]\]$' }; then
+        directive=$(echo $line | grep -Po '(?<=\[\[).*(?=\]\])')
+        handle-directive ${=directive}
+    elif { echo $line | grep --silent '^\^\^.*' }; then
+        pattern=$(echo $line | grep -Po '(?<=\^\^).*')
+        print-batch "$pattern"
+    else
+        echo $line
+    fi
+done < $script
+rm $file
