@@ -1,8 +1,28 @@
 #!/usr/bin/env zsh
 # WARNING! edits files in place. we assume you are using version control
+function set-up-temp-file() {
+    term_pattern='class.*{|interface.*{|enum.*{|^@|^\/\*\*'
+    line_organize <(awk 'BEGIN{p=1;} $0~/'$term_pattern'/{p=0} p{print}' $f) $script >> $temp
+    awk 'BEGIN{p=0;} $0~/'$term_pattern'/{p=1} p{print}' $f >> $temp
+}
+
 script=$1
 f=$2
-temp=$(mktemp java_import_organizeXXXX)
-line_organize <(awk 'BEGIN{p=1;} $0~/class.*{/{p=0} p{print}' $f) $script >> $temp
-awk 'BEGIN{p=0;} $0~/class.*{/{p=1} p{print}' $f >> $temp
-mv $temp $f 
+if [ -z $f ]; then
+    f=$(mktemp java_import_organizeXXXX)
+    cat <&0 >$f
+    line_organize $f $script
+    rm $f
+else
+    temp=$(mktemp java_import_organizeXXXX)
+    if [ ! -e $f ]; then
+        echo "$f does not exist... aborting" >&2
+        exit 1
+    fi
+    if ! { echo $f | grep --silent '.java' }; then
+        echo "$f does not appear to be a java file... aborting" >&2
+        exit 1
+    fi
+    set-up-temp-file
+    mv $temp $f 
+fi
