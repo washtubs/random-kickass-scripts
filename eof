@@ -1,0 +1,74 @@
+#!/usr/bin/env zsh
+
+function _append() {
+    local file=$1
+    sed -i -e '$a\' $file
+}
+
+function _chomp() {
+    local file=$1
+    perl -i -pe "chomp if eof" $file
+}
+
+function _git-revert() {
+    local git_rev=$1
+    local file=$2
+    # we can tell exactly what we need by checking the diff to see
+    # if it... 
+    # 1: new file ends with a no newline: append needed
+    # 2: old file ends with a no newline: chomp needed
+    # 0: no eof difference, or an error occured: do nothing
+    local s=$(git diff $git_rev $file | cat - | \
+        grep -i -A1 'no newline' | wc -l || echo "0")
+    case $s in
+        1)
+            # same as above but get the line before it and check if it actually starts with a plus.
+            # if it doesnt have a plus, the no newline is part of the original file and we don't need to
+            # do anything
+            if (git diff $git_rev $file | cat - | \
+                grep -i -B1 'no newline' | grep -q '^+'); then
+                echo "Appending newline on $file ..."
+                _append $file
+            fi
+            ;;
+        2)
+            echo "Chomping newline on $file ..."
+            _chomp $file
+            ;;
+        0)
+            # do nothing
+            ;;
+    esac
+
+}
+#use diff --git ???
+
+# unfinished
+function _revert() {
+
+    local orig_file=$1
+    local file=$2
+     #make it compatible with nifty piping syntax???
+     #diff <(git cat-file -p HEAD:git-wflow.zsh) <(git cat-file -p HEAD~3:git-wflow.zsh)
+    a=$(mktemp a_XXXX)
+    b=$(mktemp b_XXXX)
+    #cat $1 > $a
+    #cat $1 > $b
+     #or just pass in a diff output as a named pipe
+
+}
+ 
+action=$1
+shift
+case $action in
+    append)
+        _append $1
+        ;;
+    chomp)
+        _chomp $1
+        ;;
+    git-revert)
+        _git-revert $1 $2
+        ;;
+esac
+

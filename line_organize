@@ -1,0 +1,69 @@
+#!/usr/bin/env zsh
+
+#awk 'BEGIN{p=1;} $0~/class.*{/{p=0} p{print}'
+function handle-directive() {
+    head=$1
+    shift
+    case $head in
+        sort)
+            sort_args=$@
+            should_sort=true
+            ;;
+        grep)
+            grep_args=$@
+            ;;
+        stable)
+            should_sort=false
+            ;;
+        grouping_template) # print template lines only if previous pattern had a match
+            grouping_template=true
+            ;;
+        no_grouping_template)
+            grouping_template=false
+            ;;
+    esac
+}
+
+function print-batch() {
+    local pattern="$1"
+    if $should_sort; then
+        #echo " >>> cat $file | grep $grep_args $pattern | LC_ALL=C sort $sort_args" >&2
+        cat $file | grep $grep_args $pattern | LC_ALL=C sort $sort_args 
+    else
+        #echo " >>> cat $file | grep $grep_args $pattern" >&2
+        cat $file | grep $grep_args $pattern
+    fi
+    if { grep --silent $grep_args $pattern $file }; then
+        match_was_present=true
+    else
+        match_was_present=false
+    fi
+}
+
+script=$2
+file=$(mktemp "line_organizeXXXX")
+cat $1 > $file
+sort_args=()
+grep_args=()
+should_sort=true
+grouping_template=false
+match_was_present=true
+
+while read line; do
+    if { echo $line | grep --silent '^\[\[.*\]\]$' }; then
+        directive=$(echo $line | grep -Po '(?<=\[\[).*(?=\]\])')
+        handle-directive ${=directive}
+    elif { echo $line | grep --silent '^\^\^.*' }; then
+        pattern=$(echo $line | grep -Po '(?<=\^\^).*')
+        print-batch "$pattern"
+    else # template line
+        if ! $grouping_template; then
+            echo $line
+        elif $match_was_present; then
+            echo $line
+        else
+            #echo " >>> skipping $line <<" >&2
+        fi
+    fi
+done < $script
+rm $file

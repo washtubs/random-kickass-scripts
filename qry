@@ -1,0 +1,77 @@
+#!/usr/bin/env zsh
+
+# dual find-grep wrapper for git files!
+# run it inside a git repository and it will search down from where you are
+
+local find_params
+local grep_params
+local find_root
+local use_stdin=false
+local seed_find=false
+find_params=()
+grep_params=()
+# if the first arg is a file, assume it is the find root
+# and we don't want to seed from stdin or git ls-files or
+# anything like that
+if [ ! -z "$1" ] && [ -e "$1" ]; then
+    find_root=$1
+    seed_find=true
+    shift
+fi
+while [[ ! -z $1 && $1 != "--" ]]; do
+    find_params+=$1
+    shift
+done
+if [[ ! -z $1 && $1 = "--" ]]; then
+    shift
+fi
+while [[ ! -z $1 && $1 != "--" ]]; do
+    grep_params+=$1
+    shift
+done
+while [[ ! -z $1 && $1 = "--" ]]; do
+    # use stdin instead of git
+    use_stdin=true
+    shift --
+done
+
+local git_params_default
+local xargs_params_default
+local find_params_default
+local grep_params_default
+git_params_default=(ls-files .)
+xargs_params_default=(-P10 -n20 -I '[]')
+find_params_default=('[]')
+# I use pcre grep cause I'm an opinionated jackass
+# VERY interesting...
+# using color=auto apparently prevents grep from sending colored
+# output to the pipe of another program. When I had it set to always,
+# the colored output made the piped command fail.
+
+grep_params_default=(--color=auto -H -n -P)
+if $use_stdin; then
+    seed=(cat /dev/stdin)
+else
+    seed=(git ${git_params_default})
+fi
+
+# TODO modify to accept files from stdin, so we can make piped calls
+
+if $seed_find; then
+    find ${find_root} ${find_params_default} ${find_params} \
+        -exec grep ${grep_params_default} ${grep_params} '{}' \; \
+        2>/dev/null
+elif [ -z "$grep_params" ]; then
+    ${seed} | \
+        xargs ${xargs_params_default} find ${find_params_default} ${find_params} \
+        2>/dev/null
+else
+    ${seed} | \
+        xargs ${xargs_params_default} find ${find_params_default} ${find_params} \
+        -exec grep ${grep_params_default} ${grep_params} '{}' \; \
+        2>/dev/null
+fi
+#xargs ${xargs_params_default} find ${find_params_default} ${find_params} \
+#-exec grep ${grep_params_default} ${grep_params} '{}' \; \
+#2>/dev/null <&0
+
