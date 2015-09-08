@@ -1,0 +1,52 @@
+prolog dcg
+
+INPUT:
+
+Animal
+    Fish
+        minnow
+    Bug
+        ant
+        beetle
+Plant
+    azalea
+
+OR:
+
+Animal { Fish { minnow }, Bug { ant, beetle } }, Plant { azalea }
+
+OR:
+
+<Animal>
+    <Fish>
+        <minnow/>
+    </Fish>
+    <Bug>
+        <ant/>
+        <beetle/>
+    </Bug>
+</Animal>
+<Plant>
+    <azalea/>
+</Plant>
+
+OUTPUT
+Animal
+Animal|Fish
+Animal|Fish|minnow
+Animal|Bug
+Animal|Bug|ant
+Animal|Bug|beetle
+Plant|azalea
+
+
+maps to table
+{'class': 'warrior', hand': 'halberd', 'armor': 'full plate' },
+{'hand': 'dagger', 'armor': 'studded leather', 'head': 'cap' },
+{'hand': 'sword', 'feet': 'leather boots', 'head': 'helmet' }
+
+(not aligned though)
+class   | hand    | armor           | head   | feet
+warrior | halberd | full plate      |        |
+        | dagger  | studded leather | cap    |
+        | sword   |                 | helmet | leather boots
