@@ -40,8 +40,8 @@ local xargs_params_default
 local find_params_default
 local grep_params_default
 git_params_default=(ls-files .)
-xargs_params_default=(-P10 -n20 -I '[]')
-find_params_default=('[]')
+xargs_params_default=(-P10 -n20 -I '{{}}')
+find_params_default=('{{}}')
 # I use pcre grep cause I'm an opinionated jackass
 # VERY interesting...
 # using color=auto apparently prevents grep from sending colored
