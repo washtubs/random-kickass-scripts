@@ -1,0 +1,3 @@
+#!/usr/bin/env zsh
+format=$1
+awk -vformat="$format\n" '{printf(format,$0)}'

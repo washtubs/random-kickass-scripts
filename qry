@@ -1,7 +1,66 @@
 #!/usr/bin/env zsh
 
+# scope considerations
+# This is a file/content search/modify swiss army knife intended primarily for interactive use. programmatic usage should involve taking the translated command, and optimizing it manually before putting it in your script 
+# it's use cases are basically as follows
+# search for files using criteria
+# select content from files matching criteria
+# modify files matching criteria in place (with safe gaurds)
+#
+# features:
+# unifying output format using annot
+# just a glorified wrapper script
+# user defined safe gaurds to prevent from modifying files which, say, aren't tracked by git, or confine modifications to a directory.
+#
+# what it is not:
+# it is not for file operations like rm, mv, cp etc. Although it's fileselect use case can be leveraged for this purpose.
+#   qry *only* looks at or acts on files where they are.
+# it should not consult external files. all configurations should be optional, and be loaded into the interactive shell by sourcing
+#   qry can "print" it's env
+
+# notes on possible rewrite:
+# use annot. making it so we no longer depend on grep to produce the filename list
+# contentselect
+# you can choose between grep or pcre grep or maybe even awk
+# fileselect
+# git ls-files or find
+# make it so they can be strung together
+# find in addition to being an *almost* perfect wrapper, supports an additional flag to pass presets i.e. "-select authored_by dmilum3" or "-select is_git_repository" or "-select is_git_directory_recurs_submodules"
+# select will basically find an entry called authored_by, figure out how many params it takes and expand the result to an array of find args
+# presets can also be supported for contentselect
+# defaults should be supported as well, as they currently are. but we should also be able to see them easily.
+#
+# contentmodify
+# another possible thing would be to optionally swap out contentselection for contentmodify. but limit contentmodify so that it is not given a filename just the stdin content. it's stdout can then be used to modify the file
+# but qry can do some checks, such as making sure the file is backed up or is tracked and isn't currently dirty.
+# Considering some commands ONLY support inplace modify, we may HAVE to pass filenames for certain things. however, with the surrounding logic of making and restoring backups, and we can make an inplace command do a preview.
+# The above feels rather out of scope. maybe it's not such a good idea. it *might* make since to have a file exec phase
+#
+# finally the resultant command should be optionally printed so they can be used on systems that do not support qry and annot
+# the shell should support one-way translating the command on the command line in place. for example, you do some fancy file selection but you want to add a -exec to the resultant find command. 
+#
+# add debug options on the end to support shorting out the different phases. like JUST do fileselect, or maybe if using contentmodify, make it only do contentselect
+# change things contextually.
+
 # dual find-grep wrapper for git files!
 # run it inside a git repository and it will search down from where you are
+
+# find is not a perfect wrapper, certain opts should be ignored, like -exec and -print, we want a subset of find that only prints filenames
+
+# architecture:
+# search use case:
+# fileselect | repath
+# fileselect | abspath | fileselect | repath
+# contentselect use case:
+# fileselect | repath | annot contentselect 
+# fileselect | repath | annot contentselect | qfix
+# contentmodify use case:
+# fileselect | repath | xargs safe_modify {} contentselect
+#   safe_modify:
+#       cat {} | contentselect > tmp
+#       if modifiable; then; mv tmp {}; else PICNIC; fi
+
+# selectors should be compatible with sanity (this makes me think they should be functions that return strings OR be format strings. they should be able to stand on their own. they need to be convertible to fileselects)
 
 local find_params
 local grep_params
