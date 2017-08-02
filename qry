@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 
 # scope considerations
-# This is a file/content search/modify swiss army knife intended primarily for interactive use. programmatic usage should involve taking the translated command, and optimizing it manually before putting it in your script 
+# This is a file/content search/modify swiss army knife intended primarily for interactive use. programmatic usage should involve taking the translated command, and optimizing it manually before putting it in your script
 # it's use cases are basically as follows
 # search for files using criteria
 # select content from files matching criteria
@@ -37,7 +37,7 @@
 # The above feels rather out of scope. maybe it's not such a good idea. it *might* make since to have a file exec phase
 #
 # finally the resultant command should be optionally printed so they can be used on systems that do not support qry and annot
-# the shell should support one-way translating the command on the command line in place. for example, you do some fancy file selection but you want to add a -exec to the resultant find command. 
+# the shell should support one-way translating the command on the command line in place. for example, you do some fancy file selection but you want to add a -exec to the resultant find command.
 #
 # add debug options on the end to support shorting out the different phases. like JUST do fileselect, or maybe if using contentmodify, make it only do contentselect
 # change things contextually.
@@ -52,7 +52,7 @@
 # fileselect | repath
 # fileselect | abspath | fileselect | repath
 # contentselect use case:
-# fileselect | repath | annot contentselect 
+# fileselect | repath | annot contentselect
 # fileselect | repath | annot contentselect | qfix
 # contentmodify use case:
 # fileselect | repath | xargs safe_modify {} contentselect
@@ -121,6 +121,7 @@ if $seed_find; then
         -exec grep ${grep_params_default} ${grep_params} '{}' \; \
         2>/dev/null
 elif [ -z "$grep_params" ]; then
+
     ${seed} | \
         xargs ${xargs_params_default} find ${find_params_default} ${find_params} \
         2>/dev/null

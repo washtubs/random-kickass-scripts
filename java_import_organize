@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 # WARNING! edits files in place. we assume you are using version control
 function set-up-temp-file() {
-    term_pattern='class.*{|interface.*{|enum.*{|^@|^\/\*\*'
+    term_pattern='class.*{|interface.*{|enum.*{|^@|^\/\*\*|^\s*\/\/'
     line_organize <(awk 'BEGIN{p=1;} $0~/'$term_pattern'/{p=0} p{print}' $f) $script >> $temp
     awk 'BEGIN{p=0;} $0~/'$term_pattern'/{p=1} p{print}' $f >> $temp
 }

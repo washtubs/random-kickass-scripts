@@ -5,6 +5,9 @@ function handle-directive() {
     head=$1
     shift
     case $head in
+        squash)
+            squashers+="$@"
+            ;;
         sort)
             sort_args=$@
             should_sort=true
@@ -28,15 +31,26 @@ function print-batch() {
     local pattern="$1"
     if $should_sort; then
         #echo " >>> cat $file | grep $grep_args $pattern | LC_ALL=C sort $sort_args" >&2
-        cat $file | grep $grep_args $pattern | LC_ALL=C sort $sort_args 
+        cat $file | grep $grep_args $pattern | LC_ALL=C sort $sort_args | squash $squashers
     else
         #echo " >>> cat $file | grep $grep_args $pattern" >&2
-        cat $file | grep $grep_args $pattern
+        cat $file | grep $grep_args $pattern | squash $squashers
     fi
     if { grep --silent $grep_args $pattern $file }; then
         match_was_present=true
     else
         match_was_present=false
+    fi
+}
+
+squash_awk_script='BEGIN{found=0; done=0} {if ($0 ~ prefix) {found=1} else {found = 0} if (found && !done){print prefix"*;"; done=1;}} !found{print $0}'
+function squash() {
+    local squasher=$1
+    if [ -z "$squasher" ]; then
+        cat <&0
+    else
+        shift
+        awk -vprefix=$squasher "$squash_awk_script" <&0 | squash $@
     fi
 }
 
@@ -48,6 +62,7 @@ grep_args=()
 should_sort=true
 grouping_template=false
 match_was_present=true
+squashers=()
 
 while read line; do
     if { echo $line | grep --silent '^\[\[.*\]\]$' }; then
